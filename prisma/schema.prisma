@@ -1,0 +1,233 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+enum UniversityType {
+  PUBLIC
+  PRIVATE
+}
+
+enum ComplaintStatus {
+  PENDING
+  IN_REVIEW
+  RESOLVED
+  REJECTED
+}
+
+enum ComplaintCategory {
+  ACADEMIC
+  ADMINISTRATIVE
+  FACILITIES
+  SECURITY
+  HARASSMENT
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  DISMISSED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?
+  image         String?
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  ratings       Rating[]
+  reviews       Review[]
+  reviewLikes   ReviewLike[]
+  reviewReplies ReviewReply[]
+  reviewReports ReviewReport[]
+  complaints    Complaint[]
+
+  verificationToken VerificationToken?
+  resetToken        PasswordResetToken?
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expires   DateTime
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expires   DateTime
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model University {
+  id          String         @id @default(cuid())
+  name        String
+  slug        String         @unique
+  logo        String?
+  website     String?
+  description String?        @db.Text
+  location    String
+  region      String
+  type        UniversityType
+  programs    String[]
+  latitude    Float?
+  longitude   Float?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  ratings    Rating[]
+  reviews    Review[]
+  complaints Complaint[]
+  aiSummary  AiSummary?
+}
+
+model Rating {
+  id           String @id @default(cuid())
+  userId       String
+  universityId String
+
+  education   Int
+  instructors Int
+  food        Int
+  beauty      Int
+  behavior    Int
+  admin       Int
+  library     Int
+  dormitory   Int
+  security    Int
+  overall     Float
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, universityId])
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  content      String   @db.Text
+  userId       String
+  universityId String
+  likes        Int      @default(0)
+  isHidden     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  university University      @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  reviewLikes ReviewLike[]
+  replies    ReviewReply[]
+  reports    ReviewReport[]
+}
+
+model ReviewLike {
+  id       String @id @default(cuid())
+  userId   String
+  reviewId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reviewId])
+}
+
+model ReviewReply {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  userId    String
+  reviewId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+}
+
+model ReviewReport {
+  id        String       @id @default(cuid())
+  reason    String       @db.Text
+  status    ReportStatus @default(PENDING)
+  userId    String
+  reviewId  String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+}
+
+model Complaint {
+  id           String            @id @default(cuid())
+  title        String
+  description  String            @db.Text
+  category     ComplaintCategory
+  status       ComplaintStatus   @default(PENDING)
+  userId       String
+  universityId String
+  adminNotes   String?           @db.Text
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+}
+
+model AiSummary {
+  id           String   @id @default(cuid())
+  universityId String   @unique
+  summary      String   @db.Text
+  generatedAt  DateTime @default(now())
+
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+}
