@@ -4,15 +4,18 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build --webpack",
+    "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "type-check": "tsc --noEmit",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "prisma migrate reset --force"
+    "db:reset": "prisma migrate reset --force",
+    "db:studio": "prisma studio"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -30,12 +33,12 @@
     "date-fns": "^4.1.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.525.0",
-    "next": "16.2.9",
+    "next": "^16.2.9",
     "next-auth": "^5.0.0-beta.29",
     "next-themes": "^0.4.6",
     "openai": "^5.8.2",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "react-leaflet": "^5.0.0",
     "resend": "^4.6.0",
     "tailwind-merge": "^3.3.1",
@@ -48,11 +51,16 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.18",
     "eslint": "^9",
-    "eslint-config-next": "16.2.9",
+    "eslint-config-next": "^16.2.9",
+    "postcss": "^8.4.38",
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
     "tsx": "^4.20.3",
     "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
